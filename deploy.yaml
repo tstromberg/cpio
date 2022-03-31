@@ -13,10 +13,6 @@ spec:
             labels:
                 app: postgresql-controller
         spec:
-            volumes:
-                - name: init
-                  configMap:
-                      name: postgresql-controller
             containers:
                 - name: postgresql-controller
                   image: postgrescontroller/controller:13-alpine
