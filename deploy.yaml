@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+    name: postgresql-controller
+spec:
+    selector:
+        matchLabels:
+            app: postgresql-controller
+    serviceName: postgresql-controller
+    replicas: 1
+    template:
+        metadata:
+            labels:
+                app: postgresql-controller
+        spec:
+            volumes:
+                - name: init
+                  configMap:
+                      name: postgresql-controller
+            containers:
+                - name: postgresql-controller
+                  image: postgrescontroller/controller:13-alpine
+                  imagePullPolicy: Always
+                  livenessProbe:
+                      httpGet:
+                          path: /healthz
+                          port: 5433
+                      failureThreshold: 2
+                      initialDelaySeconds: 5
+                      periodSeconds: 5
+                      successThreshold: 1
+                      timeoutSeconds: 5
+                  readinessProbe:
+                      httpGet:
+                          path: /healthz
+                          port: 5433
+                      failureThreshold: 2
+                      initialDelaySeconds: 5
+                      periodSeconds: 5
+                      successThreshold: 1
+                      timeoutSeconds: 5
+                  ports:
+                      - containerPort: 5433
+                        name: psql-controller
